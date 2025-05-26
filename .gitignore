@@ -1,0 +1,4 @@
+# Sadece EE314Project_LLC klasörünü tut, içindekileri ignore et
+
+EE314Project_LLC/*
+!EE314Project_LLC/
