@@ -10,7 +10,8 @@ module char_pos_handler #(
     input  wire        rst,        // Senkron reset
     input  wire [3:0]  state,      // char_state_handler'dan gelen state
     output reg  [9:0]  char_x,     // Karakterin x konumu (örnek: 10 bit)
-    output reg  [9:0]  char_y     // Karakterin y konumu (örnek: 10 bit)
+    output reg  [9:0]  char_y,     // Karakterin y konumu (örnek: 10 bit)
+	 output wire [9:0] char_test
 );
 
 // State tanımlamaları
@@ -27,7 +28,10 @@ S_ATTACK_DIR_RECOVERY = 4'b1000;
 
 initial begin
 	char_y = INIT_Y; // Y konumu sabit, başlangıçta INIT_Y olarak ayarlanır
+	char_x = INIT_X;
 end
+
+assign char_test = char_x;
 
 always @(posedge clk) begin
     if (rst) begin

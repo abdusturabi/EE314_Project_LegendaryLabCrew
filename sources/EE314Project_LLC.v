@@ -79,22 +79,23 @@ wire [9:0] char1_y_pos; // Character 1 : Y position
 game_clock_generator game_clk_gen_inst (
 	.clk_50mhz(CLOCK_50),
 	.switch(SW[1]),
-	.step_btn(KEY[0]),
+	.step_btn(~KEY[0]),
 	.game_clk(game_clk),
 	.vga_clk(vga_clk)
 );
 char_state_handler char_state_handler_inst (
-	.KEY_LEFT(KEY[3]),
-	.KEY_RIGHT(KEY[1]),
-	.KEY_ATTACK(KEY[2]),
+	.KEY_LEFT(~KEY[3]),
+	.KEY_RIGHT(~KEY[1]),
+	.KEY_ATTACK(~KEY[2]),
 	.CLOCK(game_clk),
 	.STATE(char1_state)
 );
 char_pos_handler char1_pos_handler_inst (
 	.clk(game_clk),
 	.state(char1_state),
-	.char_x(char1_x_pos), // Output character x position to LEDs
-	.char_y(char1_y_pos) // Output character y position to LEDs
+	.char_x(char1_x_pos), 
+	.char_y(char1_y_pos), 
+	.char_test(LEDR)
 );
 vga_handler vga_handler_inst (
 	.vga_clk(vga_clk),

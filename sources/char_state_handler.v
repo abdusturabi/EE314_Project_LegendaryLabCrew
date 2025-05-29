@@ -28,6 +28,8 @@ end
 
 // MAIN FSM ========================================================
 
+assign LEDR = STATE;
+
 always @(posedge CLOCK)
 begin
 	case(STATE)
