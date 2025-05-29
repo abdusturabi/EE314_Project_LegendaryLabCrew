@@ -63,14 +63,64 @@ module EE314Project_LLC(
 //=======================================================
 //  REG/WIRE declarations
 //=======================================================
+wire game_clk; // Game clock signal
+wire vga_clk; // VGA clock signal
+wire [9:0] next_x;
+wire [9:0] next_y;
+wire [7:0] pixel_color; // Pixel color for VGA output RRRGGGBB
 
-
-
+wire [3:0] char1_state; // Character 1 : State
+wire [9:0] char1_x_pos; // Character 1 : X position
+wire [9:0] char1_y_pos; // Character 1 : Y position
 
 //=======================================================
 //  Structural coding
 //=======================================================
+game_clock_generator game_clk_gen_inst (
+	.clk_50mhz(CLOCK_50),
+	.switch(SW[1]),
+	.step_btn(KEY[0]),
+	.game_clk(game_clk),
+	.vga_clk(vga_clk)
+);
+char_state_handler char_state_handler_inst (
+	.KEY_LEFT(KEY[3]),
+	.KEY_RIGHT(KEY[1]),
+	.KEY_ATTACK(KEY[2]),
+	.CLOCK(game_clk),
+	.STATE(char1_state)
+);
+char_pos_handler char1_pos_handler_inst (
+	.clk(game_clk),
+	.state(char1_state),
+	.char_x(char1_x_pos), // Output character x position to LEDs
+	.char_y(char1_y_pos) // Output character y position to LEDs
+);
+vga_handler vga_handler_inst (
+	.vga_clk(vga_clk),
+	.x(next_x), // Replace with actual x coordinate logic
+	.y(next_y), // Replace with actual y coordinate logic
+	.char_x_pos(char1_x_pos),
+	.char_y_pos(char1_y_pos),
+	.char_state(char1_state),
+	.pixel_color(pixel_color) // Output pixel color to VGA Red channel
+);
 
+vga_driver vga_driver_inst (
+	.clock(vga_clk),
+	.reset(SW[9]), // Reset signal from KEY[0]
+	.color_in(pixel_color), // Pixel color input
+	.next_x(next_x), // Next x coordinate for VGA
+	.next_y(next_y), // Next y coordinate for VGA
+	.hsync(VGA_HS), // HSYNC output
+	.vsync(VGA_VS), // VSYNC output
+	.red(VGA_R), // Red channel output
+	.green(VGA_G), // Green channel output
+	.blue(VGA_B), // Blue channel output
+	.sync(VGA_SYNC_N), // Sync output
+	.clk(VGA_CLK), // Clock output
+	.blank(VGA_BLANK_N) // Blank signal output
+);
 
 
 endmodule
