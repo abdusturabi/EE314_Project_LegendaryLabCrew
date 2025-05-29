@@ -13,7 +13,7 @@ endmodule
 
 module sprite_renderer(
     input wire clk,
-    input wire active,
+    input wire neutral_active, dir_active, idle_active, // Active states for different sprite animations
     input wire [3:0] char_state, // e.g., 0: idle, 1: left, 2: right, 3: attack, etc.
     output reg [7:0] pixel_color // RRRGGGBB
 );
@@ -31,7 +31,7 @@ module sprite_renderer(
     // Sprite position is always (0,0) in its own coordinate system
     // Sprite size: 128x240
     always @(posedge clk) begin
-        if (active) begin
+        if ((neutral_active | dir_active | idle_active)) begin
             case (char_state)
                 S_IDLE: begin pixel_color <= 8'b000_000_00; 
                 end // Black
@@ -39,9 +39,15 @@ module sprite_renderer(
                 end
                 S_RIGHT: begin pixel_color <= 8'b000_000_00; 
                 end
-                S_ATTACK_START: begin pixel_color <= 8'b000_111_00; 
+                S_ATTACK_START: begin pixel_color <= 8'b000_000_00; 
                 end // Green
-                S_ATTACK_ACTIVE: begin pixel_color <= 8'b111_000_00; 
+                S_ATTACK_ACTIVE: begin
+                    if(idle_active)
+                        pixel_color <= 8'b000_000_00; // Black
+                    else if(dir_active)
+                        pixel_color <= 8'b111_000_00; // Red
+                    else if(neutral_active)
+                    pixel_color <= 8'b111_000_00; // Red 
                 end // Red
                 S_ATTACK_RECOVERY: begin pixel_color <= 8'b111_111_00; 
                 end // Yellow
@@ -72,14 +78,30 @@ module vga_handler(
 );
     localparam
     CHAR_WIDTH = 8'd128, // Character width
-    CHAR_HEIGHT = 8'd240; // Character height
-
+    CHAR_HEIGHT = 8'd240, // Character height
+    S_IDLE = 		      4'b0000,
+    S_LEFT = 		      4'b0001,
+    S_RIGHT = 		      4'b0010,
+    S_ATTACK_START =      4'b0011,
+    S_ATTACK_ACTIVE =     4'b0100,
+    S_ATTACK_RECOVERY =   4'b0101,
+    S_ATTACK_DIR_START =  4'b0110,
+    S_ATTACK_DIR_ACTIVE = 4'b0111,
+    S_ATTACK_DIR_RECOVERY = 4'b1000;
+	 
     wire [7:0] bg_color, sprite_color;
-    wire sprite_active, bg_active;
+    wire idle_active, neutral_active, dir_active, bg_active;
 
-    assign sprite_active = ((x >= char_x_pos) & (x < char_x_pos + CHAR_WIDTH)) &
-                            ((y >= char_y_pos) & (y < char_y_pos + CHAR_HEIGHT));
-    assign bg_active = ~sprite_active;
+    assign idle_active = ((x >= char_x_pos) & (x <= char_x_pos + CHAR_WIDTH)) &
+                            ((y >= char_y_pos) & (y <= char_y_pos + CHAR_HEIGHT));
+    
+    assign neutral_active = ((char_state == S_ATTACK_ACTIVE) & ((x >= (char_x_pos + (CHAR_WIDTH/2))) & (x <= (char_x_pos + 3*(CHAR_WIDTH/2))) &
+                            ((y >= char_y_pos + CHAR_HEIGHT - 6'd60) & (y < char_y_pos + CHAR_HEIGHT))));
+
+    assign dir_active = ((char_state == S_ATTACK_DIR_ACTIVE) & (((x >= (char_x_pos + (CHAR_WIDTH/2))) & (x <= (char_x_pos + 3*(CHAR_WIDTH/2)))) & 
+                            (((y >= char_y_pos + CHAR_HEIGHT - 6'd60) & (y < char_y_pos + CHAR_HEIGHT)) | ((y >= char_y_pos + CHAR_HEIGHT - 6'd140) & (y <= char_y_pos + CHAR_HEIGHT - 6'd80)))));
+
+    assign bg_active = (~idle_active & ~neutral_active & ~dir_active);
 
     background_renderer bg_inst(
         .clk(vga_clk),
@@ -89,13 +111,15 @@ module vga_handler(
 
     sprite_renderer sprite_inst(
         .clk(vga_clk),
-        .active(sprite_active),
+        .idle_active(idle_active),
+        .dir_active(dir_active),
+        .neutral_active(neutral_active),
         .char_state(char_state),
         .pixel_color(sprite_color)
     );
 
     always @(posedge vga_clk) begin
-        if (sprite_active)
+        if ((neutral_active | dir_active | idle_active))
             pixel_color <= sprite_color;
         else
             pixel_color <= bg_color;
