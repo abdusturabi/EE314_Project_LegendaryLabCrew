@@ -5,7 +5,8 @@ module char_state_handler (
     input CLOCK,
 
     output reg [3:0] STATE, // 7-bit state output
-	output wire [4:0] frame_test
+	output wire [4:0] frame_test,
+	output wire button_flag
 );
 //=======================================================
 localparam 
@@ -30,7 +31,7 @@ end
 // MAIN FSM ========================================================
 
 assign frame_test = FrameCounter; // For testing purposes, expose FrameCounter
-
+assign button_flag = KEY_LEFT | KEY_RIGHT;
 always @(posedge CLOCK)
 begin
 	case(STATE)

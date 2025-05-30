@@ -9,6 +9,7 @@ module char_pos_handler #(
     input  wire        clk,
     input  wire        rst,        // Senkron reset
     input  wire [3:0]  state,      // char_state_handler'dan gelen state
+    input wire button_flag,         // Buton flag (sol/sağ hareket için)
     output reg  [9:0]  char_x,     // Karakterin x konumu (örnek: 10 bit)
     output reg  [9:0]  char_y     // Karakterin y konumu (örnek: 10 bit)
 );
@@ -36,17 +37,21 @@ always @(posedge clk) begin
     end else begin
         case (state)
             S_LEFT: begin
-                if (char_x - 2'd2 >= MIN_X) begin
-                    char_x <= char_x - 2'd2; // Sol hareket
-                end else begin
-                    char_x <= MIN_X; // Minimum x konumuna ulaşınca sabit kalır
+                if(button_flag) begin
+                    if (char_x - 2'd2 >= MIN_X) begin
+                        char_x <= char_x - 2'd2; // Sol hareket
+                    end else begin
+                        char_x <= MIN_X; // Minimum x konumuna ulaşınca sabit kalır
+                    end
                 end
             end
             S_RIGHT: begin
-                if (char_x + 3'd3 <= MAX_X - CHAR_WIDTH) begin
-                    char_x <= char_x + 3'd3; // Sağ hareket
-                end else begin
-                    char_x <= MAX_X - CHAR_WIDTH; // Maksimum x konumuna ulaşınca sabit kalır
+                if(button_flag) begin
+                    if (char_x + 3'd3 <= MAX_X - CHAR_WIDTH) begin
+                        char_x <= char_x + 3'd3; // Sağ hareket
+                    end else begin
+                        char_x <= MAX_X - CHAR_WIDTH; // Maksimum x konumuna ulaşınca sabit kalır
+                    end
                 end
             end
             default: begin

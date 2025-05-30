@@ -72,6 +72,7 @@ wire [7:0] pixel_color; // Pixel color for VGA output RRRGGGBB
 wire [3:0] char1_state; // Character 1 : State
 wire [9:0] char1_x_pos; // Character 1 : X position
 wire [9:0] char1_y_pos; // Character 1 : Y position
+wire button_flag; // Button flag for character movement
 
 //=======================================================
 //  Structural coding
@@ -89,13 +90,15 @@ char_state_handler char_state_handler_inst (
 	.KEY_ATTACK(~KEY[2]),
 	.CLOCK(game_clk),
 	.STATE(char1_state),
-	.frame_test(LEDR[4:0]) // For testing purposes
+	.frame_test(LEDR[4:0]), // For testing purposes
+	.button_flag(button_flag)
 );
 char_pos_handler char1_pos_handler_inst (
 	.clk(game_clk),
 	.state(char1_state),
 	.char_x(char1_x_pos), 
 	.char_y(char1_y_pos),
+	.button_flag(button_flag)
 );
 vga_handler vga_handler_inst (
 	.vga_clk(vga_clk),
