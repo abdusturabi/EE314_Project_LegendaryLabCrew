@@ -43,8 +43,8 @@ always @(posedge clk) begin
                 end
             end
             S_RIGHT: begin
-                if (char_x + 3'd2 <= MAX_X - CHAR_WIDTH) begin
-                    char_x <= char_x + 3'd2; // Sağ hareket
+                if (char_x + 3'd3 <= MAX_X - CHAR_WIDTH) begin
+                    char_x <= char_x + 3'd3; // Sağ hareket
                 end else begin
                     char_x <= MAX_X - CHAR_WIDTH; // Maksimum x konumuna ulaşınca sabit kalır
                 end
