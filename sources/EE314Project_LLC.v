@@ -88,14 +88,14 @@ char_state_handler char_state_handler_inst (
 	.KEY_RIGHT(~KEY[1]),
 	.KEY_ATTACK(~KEY[2]),
 	.CLOCK(game_clk),
-	.STATE(char1_state)
+	.STATE(char1_state),
+	.frame_test(LEDR[4:0]) // For testing purposes
 );
 char_pos_handler char1_pos_handler_inst (
 	.clk(game_clk),
 	.state(char1_state),
 	.char_x(char1_x_pos), 
-	.char_y(char1_y_pos), 
-	.char_test(LEDR)
+	.char_y(char1_y_pos),
 );
 vga_handler vga_handler_inst (
 	.vga_clk(vga_clk),

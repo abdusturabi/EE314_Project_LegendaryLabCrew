@@ -10,6 +10,7 @@ end
 
 endmodule
 
+/*
 module clock_divider #(
     parameter hardware_clock = 50000000,
     parameter DIVISOR = 2
@@ -31,6 +32,35 @@ module clock_divider #(
     end
 
 endmodule
+*/
+
+module clock_divider #(
+    // Giriş saati (Hz)
+    parameter integer hardware_clock = 50_000_000,
+    // Hedef fps (Hz)
+    parameter integer TARGET_HZ = 60
+)(
+    input  wire        clk_in,      // 50 MHz giriş clock
+    output reg         clk_out      // her 60 Hz’de bir tek çevrimlik 1
+);
+
+    // Bölme sayacını hesaplıyoruz (integer bölmede küsurat atılır)
+    localparam integer DIV_CNT = hardware_clock / TARGET_HZ;
+
+    // Sayaç genişliğini DIV_CNT’ye göre geniş tuttuk
+    reg [31:0] counter;
+
+    always @(posedge clk_in) begin
+        if (counter == DIV_CNT-1) begin
+            counter <= 0;
+            clk_out <= 1;       // bir çevrimlik “game update” sinyali
+        end else begin
+            counter <= counter + 1;
+            clk_out <= 0;
+        end
+    end
+
+endmodule
 
 module game_clock_generator(
     input wire clk_50mhz,
@@ -43,7 +73,7 @@ module game_clock_generator(
     reg game_clk_reg;
 
     // 50_000_000 / 833_333 = 60 Hz
-    clock_divider #(.DIVISOR(833_333)) clkdiv_inst (
+    clock_divider #(.TARGET_HZ(60)) clkdiv_inst (
         .clk_in(clk_50mhz),
         .clk_out(clk_60fps)
     );

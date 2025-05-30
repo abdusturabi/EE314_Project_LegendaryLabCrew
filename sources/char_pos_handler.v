@@ -10,8 +10,7 @@ module char_pos_handler #(
     input  wire        rst,        // Senkron reset
     input  wire [3:0]  state,      // char_state_handler'dan gelen state
     output reg  [9:0]  char_x,     // Karakterin x konumu (örnek: 10 bit)
-    output reg  [9:0]  char_y,     // Karakterin y konumu (örnek: 10 bit)
-	 output wire [9:0] char_test
+    output reg  [9:0]  char_y     // Karakterin y konumu (örnek: 10 bit)
 );
 
 // State tanımlamaları
@@ -31,8 +30,6 @@ initial begin
 	char_x = INIT_X;
 end
 
-assign char_test = char_x;
-
 always @(posedge clk) begin
     if (rst) begin
         char_x <= INIT_X;
@@ -46,8 +43,8 @@ always @(posedge clk) begin
                 end
             end
             S_RIGHT: begin
-                if (char_x + 2'd2 <= MAX_X - CHAR_WIDTH) begin
-                    char_x <= char_x + 2'd2; // Sağ hareket
+                if (char_x + 3'd2 <= MAX_X - CHAR_WIDTH) begin
+                    char_x <= char_x + 3'd2; // Sağ hareket
                 end else begin
                     char_x <= MAX_X - CHAR_WIDTH; // Maksimum x konumuna ulaşınca sabit kalır
                 end

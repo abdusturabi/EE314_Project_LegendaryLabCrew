@@ -4,7 +4,8 @@ module char_state_handler (
     input KEY_ATTACK,
     input CLOCK,
 
-    output reg [3:0] STATE // 7-bit state output
+    output reg [3:0] STATE, // 7-bit state output
+	output wire [4:0] frame_test
 );
 //=======================================================
 localparam 
@@ -28,7 +29,7 @@ end
 
 // MAIN FSM ========================================================
 
-assign LEDR = STATE;
+assign frame_test = FrameCounter; // For testing purposes, expose FrameCounter
 
 always @(posedge CLOCK)
 begin
@@ -45,34 +46,33 @@ begin
 		end
 
 		S_LEFT: begin
-			if (KEY_LEFT) begin
-				STATE <= S_LEFT;
-			end else if (KEY_RIGHT) begin
-				STATE <= S_RIGHT;
-			end else if (KEY_ATTACK) begin
+			if (KEY_ATTACK) begin
 				FrameCounter <= 5'd4; 
 				STATE <= S_ATTACK_DIR_START;
+			end else if (KEY_RIGHT) begin
+				STATE <= S_RIGHT;
+			end else if (KEY_LEFT) begin
+				STATE <= S_LEFT;
 			end else begin
 				STATE <= S_IDLE;
 			end
 		end
 
 		S_RIGHT: begin
-			if (KEY_LEFT) begin
+			if(KEY_ATTACK) begin
+				FrameCounter <= 5'd4; 
+				STATE <= S_ATTACK_DIR_START;
+			end else if (KEY_LEFT) begin
 				STATE <= S_LEFT;
 			end else if (KEY_RIGHT) begin
 				STATE <= S_RIGHT;
-			end else if (KEY_ATTACK) begin
-				FrameCounter <= 5'd4; 
-				STATE <= S_ATTACK_DIR_START;
 			end else begin
 				STATE <= S_IDLE;
-
 			end
 		end
 
 		S_ATTACK_START: begin
-			if (FrameCounter > 0) begin
+			if (FrameCounter > 1) begin
 				FrameCounter <= FrameCounter - 5'd1; // Decrement frame counter
 			end else begin
 				FrameCounter <= 5'd2;
@@ -81,7 +81,7 @@ begin
 		end
 
 		S_ATTACK_ACTIVE: begin
-			if (FrameCounter > 0) begin
+			if (FrameCounter > 1) begin
 				FrameCounter <= FrameCounter - 5'd1; // Decrement frame counter
 			end else begin
 				FrameCounter <= 5'd16;
@@ -90,7 +90,7 @@ begin
 		end
 
 		S_ATTACK_RECOVERY: begin
-			if (FrameCounter > 0) begin
+			if (FrameCounter > 1) begin
 				FrameCounter <= FrameCounter - 5'd1; // Decrement frame counter
 			end else begin
 				STATE <= S_IDLE; // Return to idle state after recovery
@@ -98,7 +98,7 @@ begin
 		end
 
 		S_ATTACK_DIR_START: begin
-			if (FrameCounter > 0) begin
+			if (FrameCounter > 1) begin
 				FrameCounter <= FrameCounter - 5'd1; // Decrement frame counter
 			end else begin
 				FrameCounter <= 5'd3;
@@ -107,7 +107,7 @@ begin
 		end
 
 		S_ATTACK_DIR_ACTIVE: begin
-			if (FrameCounter > 0) begin
+			if (FrameCounter > 1) begin
 				FrameCounter <= FrameCounter - 5'd1; // Decrement frame counter
 			end else begin
 				FrameCounter <= 5'd15;
@@ -116,7 +116,7 @@ begin
 		end
 
 		S_ATTACK_DIR_RECOVERY: begin
-			if (FrameCounter > 0) begin
+			if (FrameCounter > 1) begin
 				FrameCounter <= FrameCounter - 5'd1; // Decrement frame counter
 			end else begin
 				STATE <= S_IDLE; // Return to idle state after recovery
