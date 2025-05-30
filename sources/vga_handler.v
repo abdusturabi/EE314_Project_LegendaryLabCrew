@@ -34,11 +34,22 @@ module sprite_renderer(
     CHAR_WIDTH =            10'd128, // Character width in pixels
     CHAR_HEIGHT =           10'd240; // Character height in pixels
 
-    wire idle_active, neutral_active, dir_active;
+    wire idle_active, prep_active, prep_dir_active, neutral_active, dir_active;
 
 	assign idle_active = ((x >= char_x_pos) & (x <= char_x_pos + CHAR_WIDTH)) &
                             ((y >= char_y_pos) & (y <= char_y_pos + CHAR_HEIGHT));
     
+    assign prep_active = (char_state == S_ATTACK_START) & (
+        ((x >= char_x_pos + (CHAR_WIDTH/2)) & (x <= char_x_pos + 4*(CHAR_WIDTH/2))) & // 128-pixel wide box
+        ((y >= char_y_pos + CHAR_HEIGHT - 8'd100 ) & (y < char_y_pos + CHAR_HEIGHT)) // 60-pixel tall box
+    );
+
+    assign prep_dir_active = (char_state == S_ATTACK_DIR_START) & (
+        // First rectangle
+        ((x >= (char_x_pos + (CHAR_WIDTH/2))) & (x < (char_x_pos + 3*(CHAR_WIDTH/2) + 4'd10)) & 
+         (y >= (char_y_pos + CHAR_HEIGHT - 8'd190)) & (y < char_y_pos + CHAR_HEIGHT)) 
+    );
+
     assign hurtbox_active = ((
         ((x >= char_x_pos - 4'd10) & (x <= char_x_pos + CHAR_WIDTH + 4'd10)) &
         ((y >= char_y_pos - 6'd40) & (y <= char_y_pos + CHAR_HEIGHT)))
@@ -67,7 +78,7 @@ module sprite_renderer(
          (y >= (char_y_pos + CHAR_HEIGHT - 8'd190)) & (y < char_y_pos + CHAR_HEIGHT - 7'd110)) // another 60-pixel tall box, 30-pixel gap
     );
 	
-    assign active = idle_active | neutral_active | dir_active | hurtbox_active;
+    assign active = idle_active | neutral_active | dir_active | hurtbox_active | prep_active | prep_dir_active;
 
     // Sprite position is always (0,0) in its own coordinate system
     // Sprite size: 128x240
@@ -77,6 +88,8 @@ module sprite_renderer(
                 pixel_color <= 8'b111_000_00; // Red for attack direction
             end else if (dir_active) begin
                 pixel_color <= 8'b111_000_00; // Red for attack direction
+            end else if(prep_active | prep_dir_active) begin
+                pixel_color <= 8'b001_001_00; // Dark gray for attack preparation
             end else if (idle_active) begin
                 pixel_color <= 8'b000_000_00; // Black for sprite
             end else if (hurtbox_active) begin
