@@ -89,6 +89,12 @@ reg  [7:0] start_counter; // Counter for start state
 wire [7:0] second_counter; // Counter for finding 1 second
 reg [7:0] game_finish_time;
 reg counter_rst, counter_active;
+reg [1:0] char1_frame_state_prev, char2_frame_state_prev; // Previous frame states for characters
+wire char1_frame_state_valid, char2_frame_state_valid;
+
+assign char1_frame_state_valid = (char1_frame_state != S_NOHIT) & (char1_frame_state_prev == S_NOHIT);
+assign char2_frame_state_valid = (char2_frame_state != S_NOHIT) & (char2_frame_state_prev == S_NOHIT);
+
 
 second_counter sec_count(
     .clk(clk),
@@ -99,6 +105,9 @@ second_counter sec_count(
 );
 
 always @(posedge clk) begin
+
+    char1_frame_state_prev <= char1_frame_state; // Store previous frame state for character 1
+    char2_frame_state_prev <= char2_frame_state; // Store previous frame state for character 2
 
     case (fight_state)
         FIGHT_STATE_IDLE: begin
@@ -148,7 +157,7 @@ always @(posedge clk) begin
             // Active fight logic
 
             // Check for end conditions
-            if ((char1_health & char2_health == 3'b000) | (second_counter == 8'd103)) begin 
+            if ((char1_health == 3'b000) | char2_health == 3'b000 | (second_counter == 8'd103)) begin 
                 if(char1_health == 3'b000 && char2_health == 3'b000) begin
                     fight_state <= FIGHT_STATE_END_DRAW; // Both characters lose all health
                     game_finish_time <= second_counter; // Store finish time
@@ -164,7 +173,7 @@ always @(posedge clk) begin
                 end
             end
             
-            if ((char1_frame_state == S_HITSTUN) | (char2_frame_state == S_HITSTUN)) begin
+            if (((char1_frame_state == S_HITSTUN) & (char1_frame_state_valid)) | ((char2_frame_state == S_HITSTUN) & (char2_frame_state_valid))) begin
                 // Both characters in hitstun: apply penalty to both
                 if ((char1_frame_state == S_HITSTUN) & (char2_frame_state == S_HITSTUN)) begin
                     char1_load_frame <= char1_frameCounter + 5'd15;
@@ -173,8 +182,8 @@ always @(posedge clk) begin
                     char2_health <= (char2_health >> 1);
                 end
                 // Only char1 in hitstun
-                else if (char1_frame_state == S_HITSTUN) begin
-                    if ((char2_state == S_ATTACK_ACTIVE) | (char2_state == S_ATTACK_RECOVERY)) begin
+                else if ((char1_frame_state == S_HITSTUN) & (char1_frame_state_valid)) begin
+                    if (((char2_state == S_ATTACK_ACTIVE) ) | (char2_state == S_ATTACK_RECOVERY)) begin
                         char1_load_frame <= char2_frameCounter + 5'd15;
                     end else if ((char2_state == S_ATTACK_DIR_ACTIVE) | (char2_state == S_ATTACK_DIR_RECOVERY)) begin
                         char1_load_frame <= char2_frameCounter + 5'd14;
@@ -182,7 +191,7 @@ always @(posedge clk) begin
                     char1_health <= (char1_health >> 1);
                 end
                 // Only char2 in hitstun
-                else if (char2_frame_state == S_HITSTUN) begin
+                else if ((char2_frame_state == S_HITSTUN) & (char2_frame_state_valid)) begin
                     if ((char1_state == S_ATTACK_ACTIVE) | (char1_state == S_ATTACK_RECOVERY)) begin
                         char2_load_frame <= char1_frameCounter + 5'd15;
                         char2_health <= (char2_health >> 1);
@@ -192,8 +201,8 @@ always @(posedge clk) begin
                     end
                 end
                 
-            end else if ((char1_frame_state == S_BLOCKSTUN) | (char2_frame_state == S_BLOCKSTUN)) begin
-                if(char1_frame_state == S_BLOCKSTUN) begin
+            end else if (((char1_frame_state == S_BLOCKSTUN) & (char1_frame_state_valid)) | ((char2_frame_state == S_BLOCKSTUN) & (char2_frame_state_valid))) begin
+                if((char1_frame_state == S_BLOCKSTUN) & (char1_frame_state_valid)) begin
                     // Character 1 in blockstun
                     if (char2_state == S_ATTACK_ACTIVE) begin
                         char1_load_frame <= char2_frameCounter + 5'd13;
@@ -202,7 +211,7 @@ always @(posedge clk) begin
                     end
                     char1_block <= (char1_block >> 1); 
 
-                end else if (char2_frame_state == S_BLOCKSTUN) begin
+                end else if ((char2_frame_state == S_BLOCKSTUN) & (char2_frame_state_valid)) begin
                     // Character 2 in blockstun
                     if (char1_state == S_ATTACK_ACTIVE) begin
                         char2_load_frame <= char1_frameCounter + 5'd13;
@@ -310,16 +319,16 @@ FIGHT_STATE_END_P2  = 3'b100,
 FIGHT_STATE_END_DRAW = 3'b101;
 
 localparam
-SEG_FIGHT = 42'b0111000_1111001_0100000_1001000_0001111_0111001,
+SEG_FIGHT = 42'b0001110_1001111_0000010_0001001_1111000_1001110, // "FIGHT"
 SEG_1P    = 42'b1111111_1111111_1111001_0011000_1111111_1111111, // "1P"
 SEG_2P    = 42'b1111111_1111111_0010010_0011000_1111111_1111111; // "2P"
 
-assign HEX5 = seg7[6:0];
-assign HEX4 = seg7[13:7];
-assign HEX3 = seg7[20:14];
-assign HEX2 = seg7[27:21];
-assign HEX1 = seg7[34:28];
-assign HEX0 = seg7[41:35];
+assign HEX5 = seg7[41:35]; // Tersine: 41:35
+assign HEX4 = seg7[34:28];
+assign HEX3 = seg7[27:21];
+assign HEX2 = seg7[20:14];
+assign HEX1 = seg7[13:7];
+assign HEX0 = seg7[6:0];
 
 reg match_over;
 assign char1_health_led = (game_state == S_GAME) ? char1_health : 3'b000; // Assign health for LED display

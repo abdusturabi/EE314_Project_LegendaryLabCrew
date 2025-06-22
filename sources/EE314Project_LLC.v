@@ -135,10 +135,11 @@ char_state_handler char2_state_handler_inst (
 	.KEY_ATTACK(char2_key_attack), 
 	.CLOCK(game_clk),
 	.STATE(char2_state),
+	.state_led(LEDR[6:3]), // State LED output
 	.button_flag(button2_flag),
 	.char_no(1'b1), // Character 2
 	.load_frame(char2_load_frame),
-	.load_frame_led(LEDR[6:3]), // Load frame LED output
+	.load_frame_led(), // Load frame LED output
 	.enable(input_active),
 	.FrameCounter(char2_frame_counter),
 	.block_flag(char2_block_flag),

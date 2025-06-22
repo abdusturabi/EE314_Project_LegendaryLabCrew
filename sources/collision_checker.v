@@ -44,7 +44,7 @@ module collision_checker #(
                             ((char1_pos_x + (3*CHAR_WIDTH/2)) >= char2_pos_x); // hurtboxa göre değiştirilecek
 
     assign char2_hit_flag = ((char2_state == S_ATTACK_ACTIVE) | (char2_state == S_ATTACK_DIR_ACTIVE)) && (char1_state != S_STUN) &&
-                            ((char2_pos_x - (3*CHAR_WIDTH/2)) <= (char1_pos_x + CHAR_WIDTH)); // directionalı değiştirmemiz gerekecek
+                            ((char2_pos_x - (CHAR_WIDTH/2)) <= (char1_pos_x + CHAR_WIDTH)); // directionalı değiştirmemiz gerekecek
                             
     always @(posedge clk) begin
         if (char1_hit_flag & char2_hit_flag) begin

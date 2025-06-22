@@ -9,11 +9,13 @@ module char_state_handler (
 
 	output wire [4:0] load_frame_led,
     output reg [3:0] STATE, // 7-bit state output
+	output wire [3:0] state_led, // State LED output
 	output wire button_flag,
 	output wire block_flag,
 	output reg [4:0] FrameCounter
 );
 //=======================================================
+assign state_led = STATE; // Output the current state to LEDs
 localparam 
 S_IDLE = 		      4'b0000,
 S_LEFT = 		      4'b0001,
