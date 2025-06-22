@@ -72,7 +72,37 @@ wire [7:0] pixel_color; // Pixel color for VGA output RRRGGGBB
 wire [3:0] char1_state; // Character 1 : State
 wire [9:0] char1_x_pos; // Character 1 : X position
 wire [9:0] char1_y_pos; // Character 1 : Y position
-wire button_flag; // Button flag for character movement
+wire button1_flag; // Button flag for character movement
+wire [1:0] char1_frame_state; // Frame state for character 1
+wire [4:0] char1_load_frame; // Load frame for character 1
+wire [4:0] char1_frame_counter; // Frame counter for character 1
+wire char1_block_flag; // Block flag for character 1
+wire [2:0] char1_block;
+wire [2:0] char1_health; // Health for character 1
+
+// Character 2 : State, X position, Y position
+wire [3:0] char2_state; // Character 2 : State
+wire [9:0] char2_x_pos; // Character 2 : X position
+wire [9:0] char2_y_pos; // Character 2 : Y position
+wire button2_flag; // Button flag for character movement
+wire [1:0] char2_frame_state; // Frame state for character 2
+wire [4:0] char2_load_frame; // Load frame for character 2
+wire [4:0] char2_frame_counter; // Frame counter for character 2
+wire char2_block_flag; // Block flag for character 2
+wire [2:0] char2_block;
+wire [2:0] char2_health; // Health for character 2
+wire char2_key_left; // Left key for character 2
+wire char2_key_right; // Right key for character 2
+wire char2_key_attack; // Attack key for character 2
+
+
+// Wires for game controller
+wire [2:0] game_state; // Game state
+wire [3:0] fight_state; // Fight state
+wire menu_active; // Menu active flag
+wire mode_selected;
+wire collision_flag; // Collision flag
+wire input_active;
 
 //=======================================================
 //  Structural coding
@@ -84,29 +114,145 @@ game_clock_generator game_clk_gen_inst (
 	.game_clk(game_clk),
 	.vga_clk(vga_clk)
 );
-char_state_handler char_state_handler_inst (
-	.KEY_LEFT(~KEY[3]),
-	.KEY_RIGHT(~KEY[1]),
+char_state_handler char1_state_handler_inst (
+	.KEY_LEFT(), //~KEY[3] is left key
+	.KEY_RIGHT(~KEY[3]),
 	.KEY_ATTACK(~KEY[2]),
 	.CLOCK(game_clk),
 	.STATE(char1_state),
-	.frame_test(LEDR[4:0]), // For testing purposes
-	.button_flag(button_flag)
+	.button_flag(button1_flag),
+	.char_no(1'b0), // Character 1
+	.load_frame(char1_load_frame),
+	.enable(input_active),
+	.FrameCounter(char1_frame_counter),
+	.block_flag(char1_block_flag),
+	.load_frame_led(), // Load frame LED output
 );
+
+char_state_handler char2_state_handler_inst (
+	.KEY_LEFT(char2_key_left), 
+	.KEY_RIGHT(char2_key_right), 
+	.KEY_ATTACK(char2_key_attack), 
+	.CLOCK(game_clk),
+	.STATE(char2_state),
+	.button_flag(button2_flag),
+	.char_no(1'b1), // Character 2
+	.load_frame(char2_load_frame),
+	.enable(input_active),
+	.FrameCounter(char2_frame_counter),
+	.block_flag(char2_block_flag),
+	.load_frame_led() // Load frame LED output
+);
+
+char_input_handler char2_input_handler_inst (
+	.clk_game(game_clk),
+	.reset((SW[9] | menu_active)),
+	.p1_input_valid(~KEY[0] | ~KEY[1] | ~KEY[2]), // Player 1 input valid
+	.char_left(), //GPIO EKLENECEK
+	.char_right(), //GPIO EKLENECEK
+	.char_attack(), //GPIO EKLENECEK
+	.game_mode(mode_selected), // Game mode switch (0 = Player, 1 = Bot)
+	.char_out_left(char2_key_left), // Output for character 2 left movement
+	.char_out_right(char2_key_right), // Output for character 2 right movement
+	.char_out_attack(char2_key_attack) // Output for character 2 attack
+);
+
 char_pos_handler char1_pos_handler_inst (
 	.clk(game_clk),
+	.rst((SW[9] | menu_active)),
 	.state(char1_state),
 	.char_x(char1_x_pos), 
 	.char_y(char1_y_pos),
 	.button_flag(button_flag)
 );
+
+char_pos_handler #(.INIT_X(10'd432)) char2_pos_handler_inst (
+	.clk(game_clk),
+	.rst((SW[9] | menu_active)),
+	.state(char2_state),
+	.collision_flag(collision_flag),
+	.char_x(char2_x_pos), 
+	.char_y(char2_y_pos),
+	.button_flag(button2_flag),
+	.char_no(1'b1) // Character 2
+);
+
+collision_checker collision_checker_inst (
+	.clk(game_clk),
+	.char1_pos_x(char1_x_pos),
+	.char1_pos_y(char1_y_pos),
+	.char1_state(char1_state),
+	.char1_block_flag(char1_block_flag & char1_block[0]),
+
+	.char2_pos_x(char2_x_pos),
+	.char2_pos_y(char2_y_pos),
+	.char2_state(char2_state),
+	.char2_block_flag(char2_block_flag & char2_block[0]),
+
+	.collision_flag(collision_flag),
+
+	.char1_frame_state(char1_frame_state),
+	.char2_frame_state(char2_frame_state)
+);
+
+game_controller game_controller_inst (
+	.clk(game_clk),
+	.clk_pref(SW[1]),
+	.rst(SW[9]),
+	.start_btn((~KEY[1] & ~KEY[2] & ~KEY[3])),
+	.mode_switch(SW[0]),
+	.game_state(game_state),
+
+	.char1_x_pos(char1_x_pos),
+	.char1_y_pos(char1_y_pos),
+	.char1_state(char1_state),
+	.char1_frame_state(char1_frame_state),
+	.char1_load_frame(char1_load_frame),
+	.char1_frameCounter(char1_frame_counter),
+
+	.char2_x_pos(char2_x_pos),
+	.char2_y_pos(char2_y_pos),
+	.char2_state(char2_state),
+	.char2_frame_state(char2_frame_state),
+	.char2_load_frame(char2_load_frame),
+	.char2_frameCounter(char2_frame_counter),
+
+	.char1_health(char1_health),
+	.char1_health_led(LEDR[9:7]),
+	.char1_block(char1_block),
+	.char2_health(char2_health),
+	.char2_health_led(LEDR[2:0]),
+	.char2_block(char2_block),
+
+	.fight_state(fight_state),
+	.input_active(input_active),
+	.menu_active(menu_active),
+	.HEX0(HEX0),
+	.HEX1(HEX1),
+	.HEX2(HEX2),
+	.HEX3(HEX3),
+	.HEX4(HEX4),
+	.HEX5(HEX5),
+	.mode_selected(mode_selected)
+);
+
 vga_handler vga_handler_inst (
 	.vga_clk(vga_clk),
-	.x(next_x), // Replace with actual x coordinate logic
-	.y(next_y), // Replace with actual y coordinate logic
-	.char_x_pos(char1_x_pos),
-	.char_y_pos(char1_y_pos),
-	.char_state(char1_state),
+	.x(next_x),
+	.y(next_y), 
+	// Character 1 
+	.char1_x_pos(char1_x_pos),
+	.char1_y_pos(char1_y_pos),
+	.char1_state(char1_state),
+	.char1_health(char1_health),
+	.char1_block(char1_block),
+	// Character 2
+	.char2_x_pos(char2_x_pos),
+	.char2_y_pos(char2_y_pos),
+	.char2_state(char2_state),
+	.char2_health(char2_health),
+	.char2_block(char2_block),
+	.game_state(game_state),
 	.pixel_color(pixel_color) // Output pixel color to VGA Red channel
 );
 

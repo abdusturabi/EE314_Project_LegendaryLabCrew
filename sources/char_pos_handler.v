@@ -1,6 +1,6 @@
 module char_pos_handler #(
-    parameter INIT_X = 10'd40,         // Başlangıç x konumu
-    parameter INIT_Y = 10'd200,         // Başlangıç y konumu (örnek: 0)
+    parameter INIT_X = 10'd80,         // Başlangıç x konumu
+    parameter INIT_Y = 10'd140,         // Başlangıç y konumu (örnek: 0)
     parameter MIN_X = 10'd40,          // Minimum x konumu
     parameter MAX_X = 10'd600,         // Maksimum x konumu (örnek)
     parameter CHAR_WIDTH = 10'd128,     // Karakterin genişliği
