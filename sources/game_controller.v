@@ -174,19 +174,19 @@ always @(posedge clk) begin
                 end
                 // Only char1 in hitstun
                 else if (char1_frame_state == S_HITSTUN) begin
-                    if (char2_state == S_ATTACK_ACTIVE) begin
+                    if ((char2_state == S_ATTACK_ACTIVE) | (char2_state == S_ATTACK_RECOVERY)) begin
                         char1_load_frame <= char2_frameCounter + 5'd15;
-                    end else if (char2_state == S_ATTACK_DIR_ACTIVE) begin
+                    end else if ((char2_state == S_ATTACK_DIR_ACTIVE) | (char2_state == S_ATTACK_DIR_RECOVERY)) begin
                         char1_load_frame <= char2_frameCounter + 5'd14;
                     end
                     char1_health <= (char1_health >> 1);
                 end
                 // Only char2 in hitstun
                 else if (char2_frame_state == S_HITSTUN) begin
-                    if (char1_state == S_ATTACK_ACTIVE) begin
+                    if ((char1_state == S_ATTACK_ACTIVE) | (char1_state == S_ATTACK_RECOVERY)) begin
                         char2_load_frame <= char1_frameCounter + 5'd15;
                         char2_health <= (char2_health >> 1);
-                    end else if (char1_state == S_ATTACK_DIR_ACTIVE) begin
+                    end else if ((char1_state == S_ATTACK_DIR_ACTIVE) | (char1_state == S_ATTACK_DIR_RECOVERY)) begin
                         char2_load_frame <= char1_frameCounter + 5'd14;
                         char2_health <= (char2_health >> 1);
                     end
@@ -211,6 +211,10 @@ always @(posedge clk) begin
                     char2_block <= (char2_block >> 1);
                     end
                 end
+            end else if ((char1_frame_state == S_NOHIT) & (char2_frame_state == S_NOHIT)) begin
+                // Both characters not in hitstun or blockstun
+                char1_load_frame <= 5'd0; // Reset load frame for character 1
+                char2_load_frame <= 5'd0; // Reset load frame for character 2
             end
         end
         
@@ -369,7 +373,7 @@ always @(posedge clk or posedge rst) begin
                     game_state <= S_GAME; // Transition to game state on start button press
                     game_active <= 1'b1; // Activate game state
                     menu_active <= 1'b0; // Deactivate menu state
-						  seg7 <= SEG_FIGHT;
+					seg7 <= SEG_FIGHT;
                 end else begin
                     game_state <= S_MENU; // Stay in menu state
                 end

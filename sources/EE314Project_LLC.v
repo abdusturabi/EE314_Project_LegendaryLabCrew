@@ -115,8 +115,8 @@ game_clock_generator game_clk_gen_inst (
 	.vga_clk(vga_clk)
 );
 char_state_handler char1_state_handler_inst (
-	.KEY_LEFT(), //~KEY[3] is left key
-	.KEY_RIGHT(~KEY[3]),
+	.KEY_LEFT(~KEY[3]), //~KEY[3] is left key
+	.KEY_RIGHT(~KEY[1]),
 	.KEY_ATTACK(~KEY[2]),
 	.CLOCK(game_clk),
 	.STATE(char1_state),
@@ -138,16 +138,16 @@ char_state_handler char2_state_handler_inst (
 	.button_flag(button2_flag),
 	.char_no(1'b1), // Character 2
 	.load_frame(char2_load_frame),
+	.load_frame_led(LEDR[6:3]), // Load frame LED output
 	.enable(input_active),
 	.FrameCounter(char2_frame_counter),
 	.block_flag(char2_block_flag),
-	.load_frame_led() // Load frame LED output
 );
 
 char_input_handler char2_input_handler_inst (
 	.clk_game(game_clk),
 	.reset((SW[9] | menu_active)),
-	.p1_input_valid(~KEY[0] | ~KEY[1] | ~KEY[2]), // Player 1 input valid
+	.p1_input_valid(~KEY[3] | ~KEY[1] | ~KEY[2]), // Player 1 input valid
 	.char_left(), //GPIO EKLENECEK
 	.char_right(), //GPIO EKLENECEK
 	.char_attack(), //GPIO EKLENECEK
@@ -161,9 +161,11 @@ char_pos_handler char1_pos_handler_inst (
 	.clk(game_clk),
 	.rst((SW[9] | menu_active)),
 	.state(char1_state),
+	.collision_flag(collision_flag),
 	.char_x(char1_x_pos), 
 	.char_y(char1_y_pos),
-	.button_flag(button_flag)
+	.button_flag(button1_flag),
+	.char_no(1'b0) // Character 1
 );
 
 char_pos_handler #(.INIT_X(10'd432)) char2_pos_handler_inst (

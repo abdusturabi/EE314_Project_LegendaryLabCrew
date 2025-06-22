@@ -164,7 +164,7 @@ module background_renderer #(
 
                     HEART5: begin
                         case (char2_health[1])
-                            1'b1: pixel_color <= 8'b111_1_00; // Red for heart 5
+                            1'b1: pixel_color <= 8'b111_000_00; // Red for heart 5
                             1'b0: pixel_color <= 8'b000_000_00; // Black for empty heart
                         endcase
                     end
@@ -292,7 +292,7 @@ module sprite_renderer(
         ((char_state == S_ATTACK_DIR_RECOVERY) & 
         ((x >= char_x_pos + (CHAR_WIDTH/2)) & (x <= char_x_pos + 3*(CHAR_WIDTH/2))) &
         ((y >= char_y_pos + CHAR_HEIGHT - 8'd190) & (y < char_y_pos + CHAR_HEIGHT)))
-        );
+    );
     
     assign neutral_active = (char_state == S_ATTACK_ACTIVE) & (
         ((x >= (char_x_pos + (CHAR_WIDTH/2))) & (x <= (char_x_pos + 3*(CHAR_WIDTH/2)))) &
@@ -336,16 +336,27 @@ module vga_handler(
     input wire vga_clk,
     input wire [9:0] x, // VGA x coordinate
     input wire [9:0] y, // VGA y coordinate
-    input wire [9:0] char_x_pos, // Character top-left x position
-    input wire [9:0] char_y_pos, // Character top-left y position
-    input wire [3:0] char_state,
+    input wire [9:0] char1_x_pos, // Character top-left x position
+    input wire [9:0] char1_y_pos, // Character top-left y position
+    input wire [3:0] char1_state,
+    input wire [2:0] char1_health, // Character 1 health
+    input wire [2:0] char1_block,
+    input wire [9:0] char2_x_pos,
+    input wire [9:0] char2_y_pos,
+    input wire [3:0] char2_state,
+    input wire [2:0] char2_health, // Character 2 health
+    input wire [2:0] char2_block,
+    input wire [2:0] game_state,
     output reg [7:0] pixel_color // RRRGGGBB
 );
 	 
-    wire [7:0] bg_color, sprite_color;
-    wire sprite1_active;
+    localparam
+    // Game Controller States
+    S_MENU  = 2'b00,
+    S_GAME  = 2'b01;
 
-    assign bg_active = (~sprite1_active);
+    wire [7:0] bg_color, sprite1_color, sprite2_color;
+    wire sprite1_active, sprite2_active, bg_active;
 
     background_renderer bg_inst(
         .clk(vga_clk),
@@ -362,19 +373,49 @@ module vga_handler(
 
     sprite_renderer sprite1_inst(
         .clk(vga_clk),
-        .char_state(char_state),
+        .char_state(char1_state),
         .x(x),
         .y(y),
-        .char_x_pos(char_x_pos),
-        .char_y_pos(char_y_pos),
+        .char_x_pos(char1_x_pos),
+        .char_y_pos(char1_y_pos),
         .active(sprite1_active),
-        .pixel_color(sprite_color)
+        .pixel_color(sprite1_color)
+    );
+
+    sprite_renderer sprite2_inst(
+        .clk(vga_clk),
+        .char_state(char2_state),
+        .x(x),
+        .y(y),
+        .char_x_pos(char2_x_pos),
+        .char_y_pos(char2_y_pos),
+        .active(sprite2_active),
+        .pixel_color(sprite2_color)
     );
 
     always @(posedge vga_clk) begin
-        if (sprite1_active)
-            pixel_color <= sprite_color;
-        else
-            pixel_color <= bg_color;
+        case (game_state)
+            S_MENU: begin
+                if (bg_active) begin
+                    pixel_color <= bg_color;
+                end else begin
+                    pixel_color <= 8'b000_000_00; // Black
+                end
+            end
+            S_GAME: begin
+                if (sprite1_active)
+                    pixel_color <= sprite1_color;
+                else if (sprite2_active)
+                    pixel_color <= sprite2_color;
+                else if (bg_active)
+                    pixel_color <= bg_color;
+                else begin
+                    pixel_color <= 8'b000_000_00; // Black
+                end
+            end
+            default: begin
+                pixel_color <= 8'b000_000_00; // Default to black
+            end
+        endcase
     end
 endmodule
