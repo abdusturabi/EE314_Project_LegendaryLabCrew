@@ -1,0 +1,28 @@
+
+State Machine - |EE314_Project_LegendaryLabCrew|vga_driver:vga_driver_inst|v_state
+Name v_state.V_BACK_STATE v_state.V_PULSE_STATE v_state.V_FRONT_STATE v_state.V_ACTIVE_STATE 
+v_state.V_ACTIVE_STATE 0 0 0 0 
+v_state.V_FRONT_STATE 0 0 1 1 
+v_state.V_PULSE_STATE 0 1 0 1 
+v_state.V_BACK_STATE 1 0 0 1 
+
+State Machine - |EE314_Project_LegendaryLabCrew|vga_driver:vga_driver_inst|h_state
+Name h_state.H_BACK_STATE h_state.H_PULSE_STATE h_state.H_FRONT_STATE h_state.H_ACTIVE_STATE 
+h_state.H_ACTIVE_STATE 0 0 0 0 
+h_state.H_FRONT_STATE 0 0 1 1 
+h_state.H_PULSE_STATE 0 1 0 1 
+h_state.H_BACK_STATE 1 0 0 1 
+
+State Machine - |EE314_Project_LegendaryLabCrew|vga_handler:vga_handler_inst|background_renderer:bg_inst|counter_renderer:counter_renderer_inst|counter_state
+Name counter_state.COUNTER_BOX_END counter_state.COUNTER_BOX_ACTIVE counter_state.COUNTER_BOX_COUNTDOWN counter_state.COUNTER_BOX_IDLE 
+counter_state.COUNTER_BOX_IDLE 0 0 0 0 
+counter_state.COUNTER_BOX_COUNTDOWN 0 0 1 1 
+counter_state.COUNTER_BOX_ACTIVE 0 1 0 1 
+counter_state.COUNTER_BOX_END 1 0 0 1 
+
+State Machine - |EE314_Project_LegendaryLabCrew|char_input_handler:char2_input_handler_inst|bot_input_generator:botgen|bot_state
+Name bot_state.BOT_ACTION bot_state.BOT_DELAY bot_state.BOT_INPUT bot_state.BOT_IDLE 
+bot_state.BOT_IDLE 0 0 0 0 
+bot_state.BOT_INPUT 0 0 1 1 
+bot_state.BOT_DELAY 0 1 0 1 
+bot_state.BOT_ACTION 1 0 0 1 

@@ -1,3 +1,28 @@
+module hexto7seg (output reg [6:0] hexn, input [3:0] hex);
+	
+	always @ (hex) begin
+		case (hex)     //6543210
+			0 : hexn = 7'b1000000;
+			1 : hexn = 7'b1111001;
+			2 : hexn = 7'b0100100;
+			3 : hexn = 7'b0110000;
+			4 : hexn = 7'b0011001;
+			5 : hexn = 7'b0010010;
+			6 : hexn = 7'b0000010;
+			7 : hexn = 7'b1111000;
+			8 : hexn = 7'b0000000;
+			9 : hexn = 7'b0010000;
+			10 : hexn = 7'b0001000;
+			11 : hexn = 7'b0000011;
+			12 : hexn = 7'b1000110;
+			13 : hexn = 7'b0100001;
+			14 : hexn = 7'b0000110;
+			15 : hexn = 7'b0001110;
+		endcase
+	end
+
+endmodule
+
 module second_counter (
     input  wire        clk,
     input  wire        clk_pref, // Determines which clock using
@@ -35,6 +60,7 @@ module fight_controller (
     input  wire        clk,
     input  wire        clk_pref,               // Determines which clock using
     input  wire        fight_active,           // Active high signal to indicate fight state
+    input  wire        start_btn,             // Start button (active high)
 
     input  wire [9:0]   char1_x_pos,      // Character 1 X position
     input  wire [9:0]   char1_y_pos,      // Character 1 Y position
@@ -55,8 +81,9 @@ module fight_controller (
     output reg [2:0]   char1_block,
     output reg [2:0]   char2_block,
     output reg [3:0]   fight_state,
-    output reg         input_active     // Input active flag for fight controller
-
+    output reg [7:0]   game_finish_time, // Game finish time
+    output reg         input_active,     // Input active flag for fight controller
+    output wire [7:0]  second_counter
 );
 localparam
 // Fight Controller States
@@ -86,15 +113,12 @@ S_HITSTUN =   2'b01,
 S_BLOCKSTUN = 2'b10;
 
 reg  [7:0] start_counter; // Counter for start state
-wire [7:0] second_counter; // Counter for finding 1 second
-reg [7:0] game_finish_time;
 reg counter_rst, counter_active;
 reg [1:0] char1_frame_state_prev, char2_frame_state_prev; // Previous frame states for characters
 wire char1_frame_state_valid, char2_frame_state_valid;
 
 assign char1_frame_state_valid = (char1_frame_state != S_NOHIT) & (char1_frame_state_prev == S_NOHIT);
 assign char2_frame_state_valid = (char2_frame_state != S_NOHIT) & (char2_frame_state_prev == S_NOHIT);
-
 
 second_counter sec_count(
     .clk(clk),
@@ -120,6 +144,7 @@ always @(posedge clk) begin
 
             counter_rst <= 1'b1; // Reset second counter
             input_active <= 1'b0; // Deactivate input for fight controller
+            game_finish_time <= 8'd0; // Reset game finish time
             if (fight_active) begin
                 fight_state <= FIGHT_STATE_START; // Transition to start state
                 counter_active <= 1'b0; // Deactivate second counter
@@ -160,16 +185,16 @@ always @(posedge clk) begin
             if ((char1_health == 3'b000) | char2_health == 3'b000 | (second_counter == 8'd103)) begin 
                 if(char1_health == 3'b000 && char2_health == 3'b000) begin
                     fight_state <= FIGHT_STATE_END_DRAW; // Both characters lose all health
-                    game_finish_time <= second_counter; // Store finish time
+                    game_finish_time <= (second_counter - 8'd3); // Store finish time
                 end else if (char1_health == 3'b000) begin
                     fight_state <= FIGHT_STATE_END_P2; // Character 2 wins
-                    game_finish_time <= second_counter; // Store finish time
+                    game_finish_time <= (second_counter - 8'd3); // Store finish time
                 end else if (char2_health == 3'b000) begin
                     fight_state <= FIGHT_STATE_END_P1; // Character 1 wins
-                    game_finish_time <= second_counter; // Store finish time
+                    game_finish_time <= (second_counter - 8'd3); // Store finish time
                 end else if (second_counter == 8'd103) begin
                     fight_state <= FIGHT_STATE_END_DRAW; // Draw condition after 99 seconds
-                    game_finish_time <= second_counter; // Store finish time
+                    game_finish_time <= (second_counter - 8'd3); // Store finish time
                 end
             end
             
@@ -230,8 +255,8 @@ always @(posedge clk) begin
         FIGHT_STATE_END_P1: begin
             // End fight logic for character 1 win
             input_active <= 1'b0; // Deactivate input for fight controller
-            if(second_counter >= game_finish_time + 8'd5) begin
-                // After 5 seconds, reset fight state
+            if((second_counter >= game_finish_time + 8'd10) | start_btn) begin
+                // After 10 seconds, reset fight state
                 fight_state <= FIGHT_STATE_IDLE; // Reset to idle state
             end                
         end
@@ -239,16 +264,16 @@ always @(posedge clk) begin
         FIGHT_STATE_END_P2: begin
             // End fight logic for character 2 win
             input_active <= 1'b0; // Deactivate input for fight controller
-            if(second_counter >= game_finish_time + 8'd5) begin
-                // After 5 seconds, reset fight state
+            if((second_counter >= game_finish_time + 8'd10) | start_btn) begin
+                // After 10 seconds, reset fight state
                 fight_state <= FIGHT_STATE_IDLE; // Reset to idle state
             end 
         end
         FIGHT_STATE_END_DRAW: begin
             // End fight logic for draw condition
             input_active <= 1'b0; // Deactivate input for fight controller
-            if(second_counter >= game_finish_time + 8'd5) begin
-                // After 5 seconds, reset fight state
+            if((second_counter >= game_finish_time + 8'd10) | start_btn) begin
+                // After 10 seconds, reset fight state
                 fight_state <= FIGHT_STATE_IDLE; // Reset to idle state
             end 
         end
@@ -266,78 +291,49 @@ endmodule
 
 module game_controller (
     input  wire        clk,
-    input  wire        clk_pref,      // Determines which clock using (SW0 bağlanacak)
-    input  wire        rst,           // Asynchronous reset
-    input  wire        start_btn,     // Start button (active high)
-    input  wire        mode_switch,   // Game mode select switch (0: Mode1, 1: Mode2)
-    output reg [2:0]   game_state,     // Game state input 
+    input  wire        clk_pref,
+    input  wire        rst,
+    input  wire        start_btn,
+    input  wire        mode_switch,
+    output reg [2:0]   game_state,
 
-    input  wire [9:0]  char1_x_pos,      // Character 1 X position
-    input  wire [9:0]  char1_y_pos,      // Character 1 Y position
-    input  wire [3:0]  char1_state,       // Character 1 state
-    input  wire [1:0]  char1_frame_state, // Character 1 frame state
-    input  wire [4:0]  char1_frameCounter, // Character 1 frame counter
-    output wire [4:0]  char1_load_frame, // Character 1 load frame
+    input  wire [9:0]  char1_x_pos,
+    input  wire [9:0]  char1_y_pos,
+    input  wire [3:0]  char1_state,
+    input  wire [1:0]  char1_frame_state,
+    input  wire [4:0]  char1_frameCounter,
+    output wire [4:0]  char1_load_frame,
 
-    input  wire [9:0]   char2_x_pos,      // Character 2 X position
-    input  wire [9:0]   char2_y_pos,      // Character 2 Y position
-    input  wire [3:0]   char2_state,       // Character 2 state
-    input  wire [1:0]   char2_frame_state, // Character 2 frame state
-    input wire  [4:0]   char2_frameCounter, // Character 2 frame counter
-    output wire [4:0]   char2_load_frame, // Character 2 load frame
+    input  wire [9:0]  char2_x_pos,
+    input  wire [9:0]  char2_y_pos,
+    input  wire [3:0]  char2_state,
+    input  wire [1:0]  char2_frame_state,
+    input  wire [4:0]  char2_frameCounter,
+    output wire [4:0]  char2_load_frame,
 
-    output wire [2:0]   char1_health,    // Character 1 health
-    output wire [2:0]   char1_health_led, // Character 1 health for LED
-    output wire [2:0]   char1_block,     // Character 1 block for LED
-    output wire [2:0]   char2_health,    // Character 2 health
-    output wire [2:0]   char2_health_led, // Character 2 health for LED
-    output wire [2:0]   char2_block,     // Character 2 block for LED
+    output wire [2:0]  char1_health,
+    output wire [2:0]  char1_block,
+    output wire [2:0]  char2_health,
+    output wire [2:0]  char2_block,
+    output reg  [9:0]  ledr,
 
-    output wire [3:0]   fight_state,
-    
-    output wire        input_active, // Input active flag
-    output reg         menu_active,   // Menu flag
-    output reg         game_active,   // Game flag
-    output wire  [6:0] HEX0, HEX1, HEX2, HEX3, HEX4, HEX5,  // 7-segment display output (assume common cathode)
-    output reg         mode_selected // 0: Mode1, 1: Mode2
+    output wire [3:0]  fight_state,
+    output wire        input_active,
+    output reg         menu_active,
+    output reg         game_active,
+    output wire [6:0]  HEX0, HEX1, HEX2, HEX3, HEX4, HEX5,
+    output reg         mode_selected,
+    output wire [7:0]  second_counter
 );
 
-reg [41:0] seg7; // 7-segment display output
+// Game finish time internal wire
+wire [7:0] game_finish_time_internal;
 
-localparam
-// Game Controller States
-S_MENU  = 2'b00,
-S_GAME  = 2'b01;
-
-localparam
-// Fight Controller States
-FIGHT_STATE_IDLE = 3'b000,
-FIGHT_STATE_START = 3'b001,
-FIGHT_STATE_ACTIVE = 3'b010,
-FIGHT_STATE_END_P1  = 3'b011,
-FIGHT_STATE_END_P2  = 3'b100,
-FIGHT_STATE_END_DRAW = 3'b101;
-
-localparam
-SEG_FIGHT = 42'b0001110_1001111_0000010_0001001_1111000_1001110, // "FIGHT"
-SEG_1P    = 42'b1111111_1111111_1111001_0001100_1111111_1111111, // "1P"
-SEG_2P    = 42'b1111111_1111111_0100100_0001100_1111111_1111111; // "2P"
-
-assign HEX5 = seg7[41:35]; // Tersine: 41:35
-assign HEX4 = seg7[34:28];
-assign HEX3 = seg7[27:21];
-assign HEX2 = seg7[20:14];
-assign HEX1 = seg7[13:7];
-assign HEX0 = seg7[6:0];
-
-reg match_over;
-assign char1_health_led = (game_state == S_GAME) ? char1_health : 3'b000; // Assign health for LED display
-assign char2_health_led = (game_state == S_GAME) ? char2_health : 3'b000; // Assign health for LED display
-
-fight_controller fight_ctrl(
+fight_controller fight_ctrl (
     .clk(clk),
     .clk_pref(clk_pref),
-    .fight_active(game_active), // Fight active signal
+    .fight_active(game_active),
+    .start_btn(start_btn),
     .char1_x_pos(char1_x_pos),
     .char1_y_pos(char1_y_pos),
     .char1_state(char1_state),
@@ -355,51 +351,109 @@ fight_controller fight_ctrl(
     .char1_block(char1_block),
     .char2_block(char2_block),
     .fight_state(fight_state),
-    .input_active(input_active) // Input active flag for fight controller
+    .input_active(input_active),
+    .game_finish_time(game_finish_time_internal),
+    .second_counter(second_counter)
 );
-    
+
+// Digits for game finish time
+wire [3:0] game_finish_tens = (game_finish_time_internal / 10) % 10;
+wire [3:0] game_finish_ones = game_finish_time_internal % 10;
+
+wire [6:0] hexn_tens;
+wire [6:0] hexn_ones;
+
+hexto7seg hex0(.hexn(hexn_ones), .hex(game_finish_ones));
+hexto7seg hex1(.hexn(hexn_tens), .hex(game_finish_tens));
+
+// Segment encodings
+localparam
+    S_MENU  = 2'b00,
+    S_GAME  = 2'b01;
+
+localparam
+    FIGHT_STATE_IDLE = 3'b000,
+    FIGHT_STATE_ACTIVE = 3'b010,
+    FIGHT_STATE_END_P1 = 3'b011,
+    FIGHT_STATE_END_P2 = 3'b100,
+    FIGHT_STATE_END_DRAW = 3'b101;
+
+localparam
+    SEG_FIGHT = 42'b0001110_1001111_0000010_0001001_1111000_1001110,
+    SEG_1P    = 42'b1111111_1111111_1111001_0001100_1111111_1111111,
+    SEG_2P    = 42'b1111111_1111111_0100100_0001100_1111111_1111111,
+    SEG_EQ     = 21'b0000110_0011000_0111111,
+    SEG_1P_WIN = 21'b0001100_1111001_0111111,
+    SEG_2P_WIN = 21'b0001100_0100100_0111111;
+
+assign HEX5 = seg7[41:35];
+assign HEX4 = seg7[34:28];
+assign HEX3 = seg7[27:21];
+assign HEX2 = seg7[20:14];
+assign HEX1 = seg7[13:7];
+assign HEX0 = seg7[6:0];
+
+reg match_over;
+reg [41:0] seg7;
+reg [7:0] led_counter;
+
 always @(posedge clk or posedge rst) begin
     if (rst) begin
-        game_state    <= S_MENU;
-        menu_active   <= 1'b1;
-        game_active   <= 1'b0;
-        seg7          <= SEG_2P;
+        game_state <= S_MENU;
+        menu_active <= 1'b1;
+        game_active <= 1'b0;
+        seg7 <= SEG_2P;
         mode_selected <= 1'b0;
     end else begin
         case (game_state)
             S_MENU: begin
-                menu_active   <= 1'b1;
-                game_active   <= 1'b0;
-                if (mode_switch) begin
-                    seg7 <= SEG_1P; 
-                    mode_selected <= 1'b1; 
-                end else begin
-                    seg7 <= SEG_2P; // Default to 2P mode on reset
-                    mode_selected <= 1'b0; // 0: Mode1, 1: Mode2
-                end
+                menu_active <= 1'b1;
+                game_active <= 1'b0;
+                ledr <= 10'b0;
+                seg7 <= mode_switch ? SEG_1P : SEG_2P;
+                mode_selected <= mode_switch;
 
                 if (start_btn) begin
-                    game_state <= S_GAME; // Transition to game state on start button press
-                    game_active <= 1'b1; // Activate game state
-                    menu_active <= 1'b0; // Deactivate menu state
-					seg7 <= SEG_FIGHT;
-                end else begin
-                    game_state <= S_MENU; // Stay in menu state
+                    game_state <= S_GAME;
+                    game_active <= 1'b1;
+                    menu_active <= 1'b0;
+                    seg7 <= SEG_FIGHT;
                 end
             end
+
             S_GAME: begin
-                if ((fight_state == FIGHT_STATE_END_P1) | (fight_state == FIGHT_STATE_END_P2) | (fight_state == FIGHT_STATE_END_DRAW)) begin
-                    match_over <= 1'b1; // Match is over
+                if (fight_state == FIGHT_STATE_ACTIVE) begin
+                    ledr <= {char1_health[0], char1_health[1], char1_health[2], 1'b0, 1'b0, 1'b0, 1'b0, char2_health[2], char2_health[1], char2_health[0]};
+                end
+                if (((fight_state == FIGHT_STATE_END_P1) |
+                     (fight_state == FIGHT_STATE_END_P2) |
+                     (fight_state == FIGHT_STATE_END_DRAW)) & ~match_over) begin
+                    match_over <= 1'b1;
+                    ledr <= 10'b1111111111;
                 end
                 if (match_over & (fight_state == FIGHT_STATE_IDLE)) begin
-                    game_state <= S_MENU; // Return to menu state after match over
-                    match_over <= 1'b0; // Reset match over flag
+                    game_state <= S_MENU;
+                    match_over <= 1'b0;
+                end else if (match_over) begin
+                    if ((clk_pref == 0) & (led_counter < 8'd30)) begin
+                        led_counter <= led_counter + 1;
+                    end else if ((clk_pref == 0) & (led_counter >= 8'd30)) begin
+                        led_counter <= 8'd0;
+                        ledr <= ~ledr;
+                    end
+
+                    case (fight_state)
+                        FIGHT_STATE_END_P1: seg7 <= {SEG_1P_WIN, hexn_tens, hexn_ones, 7'b1111111};
+                        FIGHT_STATE_END_P2: seg7 <= {SEG_2P_WIN, hexn_tens, hexn_ones, 7'b1111111};
+                        FIGHT_STATE_END_DRAW: seg7 <= {SEG_EQ, hexn_tens, hexn_ones, 7'b1111111};
+                        default: seg7 <= SEG_FIGHT;
+                    endcase
                 end
             end
             default: begin
-                game_state <= S_MENU; // Default to menu state on unexpected states
-                menu_active <= 1'b1; // Ensure menu is active
-                game_active <= 1'b0; // Ensure game is inactive
+                game_state <= S_MENU;
+                menu_active <= 1'b1;
+                game_active <= 1'b0;
             end
         endcase
     end

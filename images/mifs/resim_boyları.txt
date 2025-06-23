@@ -1,0 +1,7 @@
+attack_active: 185x242
+attack_recovery: 132x230
+attack_start: 120x230
+directional_attack: 198x230
+hurt: 85x230
+idle: 85x230
+walk: 95x230

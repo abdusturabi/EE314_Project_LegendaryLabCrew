@@ -79,6 +79,7 @@ wire [4:0] char1_frame_counter; // Frame counter for character 1
 wire char1_block_flag; // Block flag for character 1
 wire [2:0] char1_block;
 wire [2:0] char1_health; // Health for character 1
+wire [7:0] game_finish_time_internal;
 
 // Character 2 : State, X position, Y position
 wire [3:0] char2_state; // Character 2 : State
@@ -103,6 +104,7 @@ wire menu_active; // Menu active flag
 wire mode_selected;
 wire collision_flag; // Collision flag
 wire input_active;
+wire [7:0] second_counter; // Second counter for game controller
 
 //=======================================================
 //  Structural coding
@@ -135,7 +137,7 @@ char_state_handler char2_state_handler_inst (
 	.KEY_ATTACK(char2_key_attack), 
 	.CLOCK(game_clk),
 	.STATE(char2_state),
-	.state_led(LEDR[6:3]), // State LED output
+	.state_led(), // State LED output
 	.button_flag(button2_flag),
 	.char_no(1'b1), // Character 2
 	.load_frame(char2_load_frame),
@@ -149,9 +151,9 @@ char_input_handler char2_input_handler_inst (
 	.clk_game(game_clk),
 	.reset((SW[9] | menu_active)),
 	.p1_input_valid(~KEY[3] | ~KEY[1] | ~KEY[2]), // Player 1 input valid
-	.char_left(), //GPIO EKLENECEK
-	.char_right(), //GPIO EKLENECEK
-	.char_attack(), //GPIO EKLENECEK
+	.char_left(SW[6]), //GPIO EKLENECEK
+	.char_right(SW[5]), //GPIO EKLENECEK
+	.char_attack(SW[4]), //GPIO EKLENECEK
 	.game_mode(mode_selected), // Game mode switch (0 = Player, 1 = Bot)
 	.char_out_left(char2_key_left), // Output for character 2 left movement
 	.char_out_right(char2_key_right), // Output for character 2 right movement
@@ -221,11 +223,10 @@ game_controller game_controller_inst (
 	.char2_frameCounter(char2_frame_counter),
 
 	.char1_health(char1_health),
-	.char1_health_led(LEDR[9:7]),
 	.char1_block(char1_block),
 	.char2_health(char2_health),
-	.char2_health_led(LEDR[2:0]),
 	.char2_block(char2_block),
+	.ledr(LEDR[9:0]),
 
 	.fight_state(fight_state),
 	.input_active(input_active),
@@ -236,7 +237,8 @@ game_controller game_controller_inst (
 	.HEX3(HEX3),
 	.HEX4(HEX4),
 	.HEX5(HEX5),
-	.mode_selected(mode_selected)
+	.mode_selected(mode_selected),
+	.second_counter(second_counter)
 );
 
 vga_handler vga_handler_inst (
@@ -256,7 +258,11 @@ vga_handler vga_handler_inst (
 	.char2_health(char2_health),
 	.char2_block(char2_block),
 	.game_state(game_state),
-	.pixel_color(pixel_color) // Output pixel color to VGA Red channel
+	.fight_state(fight_state),
+	.counter_value(second_counter),
+	.pixel_color(pixel_color), // Output pixel color to VGA Red channel
+	.game_finish_time(game_finish_time_internal)
+
 );
 
 vga_driver vga_driver_inst (

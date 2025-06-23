@@ -14,6 +14,7 @@ module vga_driver (
     output blank          // BLANK to VGA connector
 );
 
+    
     // Horizontal parameters (measured in clock cycles)
     parameter [9:0] H_ACTIVE  =  10'd_639 ;
     parameter [9:0] H_FRONT   =  10'd_15 ;
