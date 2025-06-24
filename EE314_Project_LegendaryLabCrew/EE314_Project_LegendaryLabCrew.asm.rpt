@@ -1,5 +1,5 @@
 Assembler report for EE314_Project_LegendaryLabCrew
-Mon Jun 23 21:58:23 2025
+Mon Jun 23 23:55:59 2025
 Quartus Prime Version 23.1std.1 Build 993 05/14/2024 SC Lite Edition
 
 
@@ -38,7 +38,7 @@ https://fpgasoftware.intel.com/eula.
 +---------------------------------------------------------------+
 ; Assembler Summary                                             ;
 +-----------------------+---------------------------------------+
-; Assembler Status      ; Successful - Mon Jun 23 21:58:23 2025 ;
+; Assembler Status      ; Successful - Mon Jun 23 23:55:59 2025 ;
 ; Revision Name         ; EE314_Project_LegendaryLabCrew        ;
 ; Top-level Entity Name ; EE314_Project_LegendaryLabCrew        ;
 ; Family                ; Cyclone V                             ;
@@ -67,8 +67,8 @@ https://fpgasoftware.intel.com/eula.
 +----------------+------------------------------------------------------------------------------------------------+
 ; Option         ; Setting                                                                                        ;
 +----------------+------------------------------------------------------------------------------------------------+
-; JTAG usercode  ; 0x04CEF4E7                                                                                     ;
-; Checksum       ; 0x04CEF4E7                                                                                     ;
+; JTAG usercode  ; 0x0144DBF5                                                                                     ;
+; Checksum       ; 0x0144DBF5                                                                                     ;
 +----------------+------------------------------------------------------------------------------------------------+
 
 
@@ -78,14 +78,14 @@ https://fpgasoftware.intel.com/eula.
 Info: *******************************************************************
 Info: Running Quartus Prime Assembler
     Info: Version 23.1std.1 Build 993 05/14/2024 SC Lite Edition
-    Info: Processing started: Mon Jun 23 21:58:13 2025
+    Info: Processing started: Mon Jun 23 23:55:51 2025
 Info: Command: quartus_asm --read_settings_files=off --write_settings_files=off EE314_Project_LegendaryLabCrew -c EE314_Project_LegendaryLabCrew
 Warning (18236): Number of processors has not been specified which may cause overloading on shared machines.  Set the global assignment NUM_PARALLEL_PROCESSORS in your QSF to an appropriate value for best performance.
 Info (115030): Assembler is generating device programming files
 Info: Quartus Prime Assembler was successful. 0 errors, 1 warning
-    Info: Peak virtual memory: 5250 megabytes
-    Info: Processing ended: Mon Jun 23 21:58:23 2025
-    Info: Elapsed time: 00:00:10
-    Info: Total CPU time (on all processors): 00:00:11
+    Info: Peak virtual memory: 5234 megabytes
+    Info: Processing ended: Mon Jun 23 23:55:59 2025
+    Info: Elapsed time: 00:00:08
+    Info: Total CPU time (on all processors): 00:00:08
 
 

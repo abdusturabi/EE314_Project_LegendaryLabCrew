@@ -413,12 +413,6 @@ set_global_assignment -name VERILOG_FILE ../sources/collision_checker.v
 set_global_assignment -name VERILOG_FILE ../sources/game_controller.v
 set_global_assignment -name VERILOG_FILE ../sources/vga_driver.v
 set_global_assignment -name VERILOG_FILE ../sources/vga_handler.v
-set_global_assignment -name QIP_FILE ali_idle.qip
-set_global_assignment -name QIP_FILE ali_walk.qip
-set_global_assignment -name QIP_FILE ali_attack_start.qip
-set_global_assignment -name QIP_FILE ali_attack_active.qip
-set_global_assignment -name QIP_FILE ali_attack_dir_active.qip
-set_global_assignment -name QIP_FILE ali_stun.qip
 set_global_assignment -name QIP_FILE kalp.qip
 set_global_assignment -name QIP_FILE digit0.qip
 set_global_assignment -name QIP_FILE digit1.qip

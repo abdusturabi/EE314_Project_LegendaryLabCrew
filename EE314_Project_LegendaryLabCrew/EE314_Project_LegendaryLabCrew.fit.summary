@@ -1,17 +1,17 @@
-Fitter Status : Successful - Mon Jun 23 21:58:10 2025
+Fitter Status : Successful - Mon Jun 23 23:55:49 2025
 Quartus Prime Version : 23.1std.1 Build 993 05/14/2024 SC Lite Edition
 Revision Name : EE314_Project_LegendaryLabCrew
 Top-level Entity Name : EE314_Project_LegendaryLabCrew
 Family : Cyclone V
 Device : 5CSEMA5F31C6
 Timing Models : Final
-Logic utilization (in ALMs) : 979 / 32,070 ( 3 % )
-Total registers : 338
+Logic utilization (in ALMs) : 948 / 32,070 ( 3 % )
+Total registers : 344
 Total pins : 174 / 457 ( 38 % )
 Total virtual pins : 0
-Total block memory bits : 3,005,248 / 4,065,280 ( 74 % )
-Total RAM Blocks : 370 / 397 ( 93 % )
-Total DSP Blocks : 2 / 87 ( 2 % )
+Total block memory bits : 312,384 / 4,065,280 ( 8 % )
+Total RAM Blocks : 34 / 397 ( 9 % )
+Total DSP Blocks : 0 / 87 ( 0 % )
 Total HSSI RX PCSs : 0
 Total HSSI PMA RX Deserializers : 0
 Total HSSI TX PCSs : 0

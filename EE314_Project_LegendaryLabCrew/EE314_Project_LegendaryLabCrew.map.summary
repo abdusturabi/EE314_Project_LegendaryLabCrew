@@ -1,14 +1,14 @@
-Analysis & Synthesis Status : Successful - Mon Jun 23 21:54:54 2025
+Analysis & Synthesis Status : Successful - Tue Jun 24 00:01:52 2025
 Quartus Prime Version : 23.1std.1 Build 993 05/14/2024 SC Lite Edition
 Revision Name : EE314_Project_LegendaryLabCrew
 Top-level Entity Name : EE314_Project_LegendaryLabCrew
 Family : Cyclone V
 Logic utilization (in ALMs) : N/A
-Total registers : 320
+Total registers : 310
 Total pins : 174
 Total virtual pins : 0
-Total block memory bits : 3,005,248
-Total DSP Blocks : 2
+Total block memory bits : 312,384
+Total DSP Blocks : 0
 Total HSSI RX PCSs : 0
 Total HSSI PMA RX Deserializers : 0
 Total HSSI TX PCSs : 0

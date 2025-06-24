@@ -182,7 +182,7 @@ always @(posedge clk) begin
             // Active fight logic
 
             // Check for end conditions
-            if ((char1_health == 3'b000) | char2_health == 3'b000 | (second_counter == 8'd103)) begin 
+            if ((char1_health == 3'b000) | char2_health == 3'b000 | (second_counter == 8'd102)) begin 
                 if(char1_health == 3'b000 && char2_health == 3'b000) begin
                     fight_state <= FIGHT_STATE_END_DRAW; // Both characters lose all health
                     game_finish_time <= (second_counter - 8'd3); // Store finish time
